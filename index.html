@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>ClockChart</title>
+
 <style>
   body {
     margin: 0;
@@ -41,12 +42,12 @@
     height: 40vh;
     max-height: 300px;
     border: 1px solid #2a0044;
+    position: relative;
   }
 
   canvas {
-    width: 100%;
-    height: 100%;
-    display: block;
+    position: absolute;
+    inset: 0;
   }
 </style>
 </head>
@@ -68,8 +69,9 @@ const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 
 function resize() {
-  canvas.width = canvas.clientWidth;
-  canvas.height = canvas.clientHeight;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = Math.floor(rect.width);
+  canvas.height = Math.floor(rect.height);
 }
 window.addEventListener("resize", resize);
 resize();
@@ -84,7 +86,7 @@ function loadStart() {
     t = Date.now();
     localStorage.setItem(storageKey, t);
   }
-  return parseInt(t, 10);
+  return Number(t);
 }
 
 function setMode(name, ms) {
@@ -96,42 +98,47 @@ function setMode(name, ms) {
   event.target.classList.add("active");
 }
 
-setMode("1m",60000);
+setMode("1m", 60000);
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const now = Date.now();
-  const elapsed = now - startTime;
-
+  const elapsed = Date.now() - startTime;
   const full = Math.floor(elapsed / intervalMs);
   const progress = (elapsed % intervalMs) / intervalMs;
 
   const candleWidth = 10;
   const maxVisible = Math.floor(canvas.width / candleWidth);
+  const total = full + 1;
+  const start = Math.max(0, total - maxVisible);
 
-  const totalCandles = full + 1; // always show at least one
-  const start = Math.max(0, totalCandles - maxVisible);
+  const maxHeight = Math.max(1, total);
 
-  const maxHeightValue = Math.max(1, totalCandles);
-
-  // draw completed candles
+  // completed candles
   for (let i = start; i < full; i++) {
     const x = (i - start) * candleWidth;
-    const h = ((i + 1) / maxHeightValue) * canvas.height;
+    const h = ((i + 1) / maxHeight) * canvas.height;
 
     ctx.fillStyle = "#7a3cff";
-    ctx.fillRect(x, canvas.height - h, candleWidth - 2, Math.max(h, 4));
+    ctx.fillRect(
+      x,
+      canvas.height - h,
+      candleWidth - 2,
+      Math.max(h, 8)
+    );
   }
 
-  // draw live candle
-  const liveIndex = full;
-  const x = (liveIndex - start) * candleWidth;
-  const liveValue = full + progress;
-  const h = (liveValue / maxHeightValue) * canvas.height;
+  // live candle
+  const x = (full - start) * candleWidth;
+  const h = ((full + progress) / maxHeight) * canvas.height;
 
   ctx.fillStyle = "#b084ff";
-  ctx.fillRect(x, canvas.height - h, candleWidth - 2, Math.max(h, 6));
+  ctx.fillRect(
+    x,
+    canvas.height - h,
+    candleWidth - 2,
+    Math.max(h, 12)
+  );
 
   requestAnimationFrame(draw);
 }
