@@ -9,13 +9,28 @@
     background: #000;
     color: #888;
     font-family: system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
   }
+
+  #wrapper {
+    width: 70vw;
+    max-width: 900px;
+    height: 40vh;
+    max-height: 300px;
+    border: 1px solid #111;
+    background: #000;
+    position: relative;
+  }
+
   #controls {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 10;
+    position: absolute;
+    top: -40px;
+    left: 0;
   }
+
   button {
     margin-right: 6px;
     background: #111;
@@ -23,30 +38,35 @@
     border: 1px solid #222;
     padding: 6px 10px;
     cursor: pointer;
+    font-size: 12px;
   }
+
   canvas {
+    width: 100%;
+    height: 100%;
     display: block;
   }
 </style>
 </head>
 <body>
 
-<div id="controls">
-  <button onclick="setIntervalMs(1000)">1s</button>
-  <button onclick="setIntervalMs(60000)">1m</button>
-  <button onclick="setIntervalMs(3600000)">1h</button>
-  <button onclick="setIntervalMs(86400000)">1d</button>
+<div id="wrapper">
+  <div id="controls">
+    <button onclick="setIntervalMs(1000)">1s</button>
+    <button onclick="setIntervalMs(60000)">1m</button>
+    <button onclick="setIntervalMs(3600000)">1h</button>
+    <button onclick="setIntervalMs(86400000)">1d</button>
+  </div>
+  <canvas id="chart"></canvas>
 </div>
-
-<canvas id="chart"></canvas>
 
 <script>
 const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 
 function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
 }
 window.addEventListener("resize", resize);
 resize();
