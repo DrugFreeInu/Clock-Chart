@@ -8,10 +8,31 @@
   body {
     margin: 0;
     background: black;
+    font-family: system-ui, sans-serif;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
+  }
+
+  #controls {
+    margin-bottom: 12px;
+  }
+
+  button {
+    font-size: 14px;
+    padding: 8px 14px;
+    margin: 0 4px;
+    background: #140022;
+    color: #caa6ff;
+    border: 1px solid #2a0044;
+    cursor: pointer;
+  }
+
+  button.active {
+    background: #7a3cff;
+    color: black;
   }
 
   canvas {
@@ -20,6 +41,13 @@
 </style>
 </head>
 <body>
+
+<div id="controls">
+  <button onclick="setIntervalMode(1,this)">1 sec</button>
+  <button onclick="setIntervalMode(60,this)">1 min</button>
+  <button onclick="setIntervalMode(3600,this)">1 hour</button>
+  <button onclick="setIntervalMode(86400,this)">1 day</button>
+</div>
 
 <canvas id="chart" width="800" height="300"></canvas>
 
@@ -37,31 +65,49 @@ if (!start) {
   start = Number(start);
 }
 
-const INTERVAL = 1000; // 1 second per candle
 const CANDLE_WIDTH = 8;
+let intervalSec = 1; // default 1 second
+
+function setIntervalMode(sec, btn) {
+  intervalSec = sec;
+  document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+// default active button
+document.querySelectorAll("button")[0].classList.add("active");
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const elapsed = Date.now() - start;
-  const candles = Math.floor(elapsed / INTERVAL) + 1;
+  const elapsedSec = Math.floor((Date.now() - start) / 1000);
+  const candles = Math.floor(elapsedSec / intervalSec) + 1;
 
   const maxVisible = Math.floor(canvas.width / CANDLE_WIDTH);
   const startIndex = Math.max(0, candles - maxVisible);
 
   for (let i = startIndex; i < candles; i++) {
     const x = (i - startIndex) * CANDLE_WIDTH;
-    const heightRatio = (i + 1) / candles;
-    const h = heightRatio * canvas.height;
+    const h = ((i + 1) / candles) * canvas.height;
 
     ctx.fillStyle = "#7a3cff";
     ctx.fillRect(
       x,
       canvas.height - h,
       CANDLE_WIDTH - 1,
-      Math.max(h, 5)
+      Math.max(h, 6)
     );
   }
+
+  // label
+  ctx.fillStyle = "#aaa";
+  ctx.font = "12px system-ui";
+  ctx.fillText(
+    intervalSec === 1 ? "1s" :
+    intervalSec === 60 ? "1m" :
+    intervalSec === 3600 ? "1h" : "1d",
+    10, 20
+  );
 
   requestAnimationFrame(draw);
 }
