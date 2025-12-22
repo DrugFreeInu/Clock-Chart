@@ -5,21 +5,27 @@
 <title>ClockChart</title>
 
 <style>
-  body {
+  html, body {
     margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* 🔒 disable scrollbars */
+  }
+
+  body {
     background: black;
     font-family: system-ui, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
     color: #caa6ff;
   }
 
   canvas {
     border: 1px solid #2a0044;
-    touch-action: none;
+    touch-action: none; /* pure touch control */
   }
 
   #count {
@@ -89,7 +95,7 @@ function updatePointer(e) {
 
 // ---- draw loop ----
 function draw() {
-  // temporal fade (this creates trails)
+  // temporal fade (FCP-style trails)
   ctx.fillStyle = isHolding
     ? "rgba(0,0,0,0.06)"   // slow decay while holding
     : "rgba(0,0,0,0.25)";  // faster decay when released
@@ -108,6 +114,8 @@ function draw() {
     if (x < -STEP || x > canvas.width + STEP) continue;
 
     const h = ((i + 1) / candles) * canvas.height;
+
+    // alternating purple rhythm
     ctx.fillStyle = (i % 2 === 0) ? "#b084ff" : "#5a2bbf";
     ctx.fillRect(x, canvas.height - h, CANDLE_WIDTH, Math.max(h, 6));
   }
