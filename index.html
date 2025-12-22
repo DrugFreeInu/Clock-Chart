@@ -17,62 +17,28 @@
     color: #caa6ff;
   }
 
-  #controls {
-    margin-bottom: 10px;
-  }
-
-  button {
-    font-size: 14px;
-    padding: 8px 14px;
-    margin: 0 4px;
-    background: #140022;
-    color: #caa6ff;
-    border: 1px solid #2a0044;
-    cursor: pointer;
-  }
-
-  button.active {
-    background: #7a3cff;
-    color: black;
-  }
-
-  #wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
   canvas {
     border: 1px solid #2a0044;
+    touch-action: none; /* important for swipe */
   }
 
   #count {
     margin-top: 8px;
     font-size: 14px;
-    opacity: 0.9;
   }
 </style>
 </head>
 <body>
 
-<div id="controls">
-  <button onclick="setIntervalMode(1,this)">1 sec</button>
-  <button onclick="setIntervalMode(60,this)">1 min</button>
-  <button onclick="setIntervalMode(3600,this)">1 hour</button>
-  <button onclick="setIntervalMode(86400,this)">1 day</button>
-</div>
-
-<div id="wrapper">
-  <canvas id="chart" width="800" height="300"></canvas>
-  <div id="count">0</div>
-</div>
+<canvas id="chart" width="800" height="300"></canvas>
+<div id="count">0</div>
 
 <script>
 const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 const countEl = document.getElementById("count");
 
-// persistent start
+// --- time persistence ---
 const KEY = "clockchart_start";
 let start = localStorage.getItem(KEY);
 if (!start) {
@@ -82,48 +48,85 @@ if (!start) {
   start = Number(start);
 }
 
-const CANDLE_WIDTH = 8;
-let intervalSec = 1; // default
+// --- config ---
+const INTERVAL_SEC = 1;
+const CANDLE_WIDTH = 6;
+const CANDLE_GAP = 4; // ✨ spacing
+const STEP = CANDLE_WIDTH + CANDLE_GAP;
 
-function setIntervalMode(sec, btn) {
-  intervalSec = sec;
-  document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
+// --- swipe state ---
+let scrollOffset = 0;
+let isDragging = false;
+let lastX = 0;
+let trailAlpha = 0;
+
+// --- audio (soft chime) ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playChime(pitch = 440) {
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+
+  o.type = "sine";
+  o.frequency.value = pitch;
+
+  g.gain.value = 0.0001;
+  g.gain.exponentialRampToValueAtTime(0.05, audioCtx.currentTime + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+
+  o.connect(g).connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + 0.31);
 }
 
-document.querySelectorAll("button")[0].classList.add("active");
+// --- swipe handlers ---
+canvas.addEventListener("pointerdown", e => {
+  isDragging = true;
+  lastX = e.clientX;
+  trailAlpha = 1;
+});
 
+canvas.addEventListener("pointermove", e => {
+  if (!isDragging) return;
+  const dx = e.clientX - lastX;
+  scrollOffset += dx;
+  lastX = e.clientX;
+
+  playChime(300 + Math.abs(dx) * 5);
+  trailAlpha = 1;
+});
+
+canvas.addEventListener("pointerup", () => isDragging = false);
+canvas.addEventListener("pointerleave", () => isDragging = false);
+
+// --- draw loop ---
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // fade trail
+  ctx.fillStyle = `rgba(0,0,0,0.25)`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const elapsedSec = Math.floor((Date.now() - start) / 1000);
-  const candles = Math.floor(elapsedSec / intervalSec) + 1;
+  const candles = Math.floor(elapsedSec / INTERVAL_SEC) + 1;
+  countEl.textContent = `${candles} seconds`;
 
-  const label =
-    intervalSec === 1 ? "seconds" :
-    intervalSec === 60 ? "minutes" :
-    intervalSec === 3600 ? "hours" : "days";
-  countEl.textContent = `${candles} ${label}`;
-
-  const maxVisible = Math.floor(canvas.width / CANDLE_WIDTH);
+  const maxVisible = Math.ceil(canvas.width / STEP) + 2;
   const startIndex = Math.max(0, candles - maxVisible);
 
   for (let i = startIndex; i < candles; i++) {
-    const x = (i - startIndex) * CANDLE_WIDTH;
+    const x = (i - startIndex) * STEP + scrollOffset;
+    if (x < -STEP || x > canvas.width + STEP) continue;
+
     const h = ((i + 1) / candles) * canvas.height;
 
-    // color logic
-    let color = "#7a3cff";          // normal
-    if (i === candles - 1) color = "#b084ff"; // current (bright)
-    else if (i === candles - 2) color = "#5a2bbf"; // previous (darker)
+    // alternating color rhythm
+    ctx.fillStyle = (i % 2 === 0) ? "#b084ff" : "#5a2bbf";
+    ctx.fillRect(x, canvas.height - h, CANDLE_WIDTH, Math.max(h, 6));
+  }
 
-    ctx.fillStyle = color;
-    ctx.fillRect(
-      x,
-      canvas.height - h,
-      CANDLE_WIDTH - 1,
-      Math.max(h, 6)
-    );
+  // trail glow overlay
+  if (trailAlpha > 0) {
+    ctx.fillStyle = `rgba(176,132,255,${trailAlpha * 0.08})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    trailAlpha *= 0.9;
   }
 
   requestAnimationFrame(draw);
