@@ -19,17 +19,49 @@ body {
   color: #caa6ff;
 }
 
-/* ---- MASSIVE NEON SIGN ---- */
-#neon {
+/* ---- CONTROLS ---- */
+#controls {
   position: absolute;
   top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 18px;
+  z-index: 10;
+}
+
+button {
+  background: rgba(40,10,80,0.65);
+  color: #e0c8ff;
+  border: 2px solid rgba(160,120,255,0.6);
+  padding: 18px 28px;
+  font-size: 22px;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+button.active {
+  background: rgba(190,150,255,0.95);
+  color: black;
+}
+
+button:hover {
+  background: rgba(160,120,255,0.85);
+  color: black;
+}
+
+/* ---- NEON SIGN (UNDER BUTTONS) ---- */
+#neon {
+  position: absolute;
+  top: 18%;
   width: 100%;
   text-align: center;
   pointer-events: none;
 
   font-weight: 900;
-  letter-spacing: 0.18em;
-  font-size: min(22vw, 260px);
+  letter-spacing: 0.22em;
+  font-size: min(18vw, 220px);
   color: #c59bff;
 
   text-shadow:
@@ -54,38 +86,6 @@ body {
   100% { opacity: 0.9; }
 }
 
-/* ---- CONTROLS ---- */
-#controls {
-  position: absolute;
-  top: calc(6% + 22vw);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  z-index: 10;
-}
-
-button {
-  background: rgba(40,10,80,0.6);
-  color: #caa6ff;
-  border: 1px solid rgba(160,120,255,0.4);
-  padding: 8px 14px;
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-}
-
-button.active {
-  background: rgba(160,120,255,0.9);
-  color: black;
-}
-
-button:hover {
-  background: rgba(120,80,200,0.8);
-  color: black;
-}
-
 /* ---- CANVAS ---- */
 canvas {
   display: block;
@@ -96,28 +96,26 @@ canvas {
 
 <body>
 
-<div id="neon">DFI&nbsp;TIME</div>
-
 <div id="controls">
-  <button class="active" onclick="setIntervalMode(1,this)">1s</button>
-  <button onclick="setIntervalMode(60,this)">1m</button>
-  <button onclick="setIntervalMode(3600,this)">1h</button>
-  <button onclick="setIntervalMode(86400,this)">1d</button>
+  <button class="active" onclick="setIntervalMode(1,this)">1&nbsp;SEC</button>
+  <button onclick="setIntervalMode(60,this)">1&nbsp;MIN</button>
+  <button onclick="setIntervalMode(3600,this)">1&nbsp;HOUR</button>
+  <button onclick="setIntervalMode(86400,this)">1&nbsp;DAY</button>
 </div>
+
+<div id="neon">DFI&nbsp;TIME</div>
 
 <canvas id="chart"></canvas>
 
 <script>
 /* ================= NEON FLICKER ================= */
 const neon = document.getElementById("neon");
-
-function flicker() {
+setInterval(() => {
   if (Math.random() < 0.05) {
     neon.style.opacity = "0.25";
     setTimeout(() => neon.style.opacity = "1", 45);
   }
-}
-setInterval(flicker, 220);
+}, 220);
 
 /* ================= CLOCKCHART ================= */
 const canvas = document.getElementById("chart");
@@ -130,7 +128,7 @@ function resize() {
 resize();
 window.addEventListener("resize", resize);
 
-// ---- chart layout ----
+// ---- layout ----
 const CHART_WIDTH = 800;
 const CHART_HEIGHT = 300;
 
@@ -202,7 +200,7 @@ function draw() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const ox = (canvas.width - CHART_WIDTH) / 2;
-  const oy = (canvas.height - CHART_HEIGHT) / 2 + 140;
+  const oy = (canvas.height - CHART_HEIGHT) / 2 + 220;
 
   const elapsedSec = Math.floor((Date.now() - start) / 1000);
   const candles = Math.floor(elapsedSec / INTERVAL_SEC) + 1;
