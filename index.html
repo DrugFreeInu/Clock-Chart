@@ -83,7 +83,7 @@ if (!start) {
 }
 
 const CANDLE_WIDTH = 8;
-let intervalSec = 1; // default 1 second
+let intervalSec = 1; // default
 
 function setIntervalMode(sec, btn) {
   intervalSec = sec;
@@ -91,7 +91,6 @@ function setIntervalMode(sec, btn) {
   btn.classList.add("active");
 }
 
-// default active button
 document.querySelectorAll("button")[0].classList.add("active");
 
 function draw() {
@@ -100,7 +99,6 @@ function draw() {
   const elapsedSec = Math.floor((Date.now() - start) / 1000);
   const candles = Math.floor(elapsedSec / intervalSec) + 1;
 
-  // update count text
   const label =
     intervalSec === 1 ? "seconds" :
     intervalSec === 60 ? "minutes" :
@@ -114,7 +112,12 @@ function draw() {
     const x = (i - startIndex) * CANDLE_WIDTH;
     const h = ((i + 1) / candles) * canvas.height;
 
-    ctx.fillStyle = "#7a3cff";
+    // color logic
+    let color = "#7a3cff";          // normal
+    if (i === candles - 1) color = "#b084ff"; // current (bright)
+    else if (i === candles - 2) color = "#5a2bbf"; // previous (darker)
+
+    ctx.fillStyle = color;
     ctx.fillRect(
       x,
       canvas.height - h,
