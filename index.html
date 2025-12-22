@@ -14,10 +14,11 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
+    color: #caa6ff;
   }
 
   #controls {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   button {
@@ -35,8 +36,20 @@
     color: black;
   }
 
+  #wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
   canvas {
     border: 1px solid #2a0044;
+  }
+
+  #count {
+    margin-top: 8px;
+    font-size: 14px;
+    opacity: 0.9;
   }
 </style>
 </head>
@@ -49,11 +62,15 @@
   <button onclick="setIntervalMode(86400,this)">1 day</button>
 </div>
 
-<canvas id="chart" width="800" height="300"></canvas>
+<div id="wrapper">
+  <canvas id="chart" width="800" height="300"></canvas>
+  <div id="count">0</div>
+</div>
 
 <script>
 const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
+const countEl = document.getElementById("count");
 
 // persistent start
 const KEY = "clockchart_start";
@@ -83,6 +100,13 @@ function draw() {
   const elapsedSec = Math.floor((Date.now() - start) / 1000);
   const candles = Math.floor(elapsedSec / intervalSec) + 1;
 
+  // update count text
+  const label =
+    intervalSec === 1 ? "seconds" :
+    intervalSec === 60 ? "minutes" :
+    intervalSec === 3600 ? "hours" : "days";
+  countEl.textContent = `${candles} ${label}`;
+
   const maxVisible = Math.floor(canvas.width / CANDLE_WIDTH);
   const startIndex = Math.max(0, candles - maxVisible);
 
@@ -98,16 +122,6 @@ function draw() {
       Math.max(h, 6)
     );
   }
-
-  // label
-  ctx.fillStyle = "#aaa";
-  ctx.font = "12px system-ui";
-  ctx.fillText(
-    intervalSec === 1 ? "1s" :
-    intervalSec === 60 ? "1m" :
-    intervalSec === 3600 ? "1h" : "1d",
-    10, 20
-  );
 
   requestAnimationFrame(draw);
 }
