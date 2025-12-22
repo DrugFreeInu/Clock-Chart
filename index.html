@@ -7,138 +7,61 @@
 <style>
   body {
     margin: 0;
-    background: #000;
-    color: #aaa;
-    font-family: system-ui, sans-serif;
+    background: black;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
   }
 
-  #controls {
-    margin-bottom: 16px;
-  }
-
-  button {
-    font-size: 16px;
-    padding: 10px 16px;
-    margin: 0 6px;
-    background: #140022;
-    color: #caa6ff;
-    border: 1px solid #2a0044;
-    cursor: pointer;
-  }
-
-  button.active {
-    background: #7a3cff;
-    color: #000;
-  }
-
-  #wrapper {
-    width: 70vw;
-    max-width: 900px;
-    height: 40vh;
-    max-height: 300px;
-    border: 1px solid #2a0044;
-    position: relative;
-  }
-
   canvas {
-    position: absolute;
-    inset: 0;
+    border: 1px solid #2a0044;
   }
 </style>
 </head>
 <body>
 
-<div id="controls">
-  <button onclick="setMode('1s',1000)">1 sec</button>
-  <button onclick="setMode('1m',60000)">1 min</button>
-  <button onclick="setMode('1h',3600000)">1 hour</button>
-  <button onclick="setMode('1d',86400000)">1 day</button>
-</div>
-
-<div id="wrapper">
-  <canvas id="chart"></canvas>
-</div>
+<canvas id="chart" width="800" height="300"></canvas>
 
 <script>
 const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 
-function resize() {
-  const rect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = Math.floor(rect.width);
-  canvas.height = Math.floor(rect.height);
-}
-window.addEventListener("resize", resize);
-resize();
-
-let intervalMs = 60000;
-let storageKey = "clockchart_start_1m";
-let startTime = loadStart();
-
-function loadStart() {
-  let t = localStorage.getItem(storageKey);
-  if (!t) {
-    t = Date.now();
-    localStorage.setItem(storageKey, t);
-  }
-  return Number(t);
+// persistent start
+const KEY = "clockchart_start";
+let start = localStorage.getItem(KEY);
+if (!start) {
+  start = Date.now();
+  localStorage.setItem(KEY, start);
+} else {
+  start = Number(start);
 }
 
-function setMode(name, ms) {
-  intervalMs = ms;
-  storageKey = "clockchart_start_" + name;
-  startTime = loadStart();
-
-  document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-  event.target.classList.add("active");
-}
-
-setMode("1m", 60000);
+const INTERVAL = 1000; // 1 second per candle
+const CANDLE_WIDTH = 8;
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const elapsed = Date.now() - startTime;
-  const full = Math.floor(elapsed / intervalMs);
-  const progress = (elapsed % intervalMs) / intervalMs;
+  const elapsed = Date.now() - start;
+  const candles = Math.floor(elapsed / INTERVAL) + 1;
 
-  const candleWidth = 10;
-  const maxVisible = Math.floor(canvas.width / candleWidth);
-  const total = full + 1;
-  const start = Math.max(0, total - maxVisible);
+  const maxVisible = Math.floor(canvas.width / CANDLE_WIDTH);
+  const startIndex = Math.max(0, candles - maxVisible);
 
-  const maxHeight = Math.max(1, total);
-
-  // completed candles
-  for (let i = start; i < full; i++) {
-    const x = (i - start) * candleWidth;
-    const h = ((i + 1) / maxHeight) * canvas.height;
+  for (let i = startIndex; i < candles; i++) {
+    const x = (i - startIndex) * CANDLE_WIDTH;
+    const heightRatio = (i + 1) / candles;
+    const h = heightRatio * canvas.height;
 
     ctx.fillStyle = "#7a3cff";
     ctx.fillRect(
       x,
       canvas.height - h,
-      candleWidth - 2,
-      Math.max(h, 8)
+      CANDLE_WIDTH - 1,
+      Math.max(h, 5)
     );
   }
-
-  // live candle
-  const x = (full - start) * candleWidth;
-  const h = ((full + progress) / maxHeight) * canvas.height;
-
-  ctx.fillStyle = "#b084ff";
-  ctx.fillRect(
-    x,
-    canvas.height - h,
-    candleWidth - 2,
-    Math.max(h, 12)
-  );
 
   requestAnimationFrame(draw);
 }
