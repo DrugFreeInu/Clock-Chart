@@ -7,12 +7,11 @@
   body {
     margin: 0;
     background: #000;
-    color: #888;
-    font-family: system-ui, sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100vh;
+    font-family: system-ui, sans-serif;
   }
 
   #wrapper {
@@ -20,25 +19,8 @@
     max-width: 900px;
     height: 40vh;
     max-height: 300px;
-    border: 1px solid #111;
+    border: 1px solid #140022;
     background: #000;
-    position: relative;
-  }
-
-  #controls {
-    position: absolute;
-    top: -40px;
-    left: 0;
-  }
-
-  button {
-    margin-right: 6px;
-    background: #111;
-    color: #0f0;
-    border: 1px solid #222;
-    padding: 6px 10px;
-    cursor: pointer;
-    font-size: 12px;
   }
 
   canvas {
@@ -51,12 +33,6 @@
 <body>
 
 <div id="wrapper">
-  <div id="controls">
-    <button onclick="setIntervalMs(1000)">1s</button>
-    <button onclick="setIntervalMs(60000)">1m</button>
-    <button onclick="setIntervalMs(3600000)">1h</button>
-    <button onclick="setIntervalMs(86400000)">1d</button>
-  </div>
   <canvas id="chart"></canvas>
 </div>
 
@@ -71,42 +47,36 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-let intervalMs = 1000;
-let startTime = Date.now();
-let candles = [];
+const KEY = "clockchart_start_time";
+const INTERVAL_MS = 60000; // 1 minute per candle
 
-function setIntervalMs(ms) {
-  intervalMs = ms;
+let startTime = localStorage.getItem(KEY);
+if (!startTime) {
   startTime = Date.now();
-  candles = [];
-}
-
-function updateCandles() {
-  const elapsed = Date.now() - startTime;
-  const count = Math.floor(elapsed / intervalMs);
-
-  while (candles.length <= count) {
-    candles.push(candles.length);
-  }
+  localStorage.setItem(KEY, startTime);
+} else {
+  startTime = parseInt(startTime, 10);
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  updateCandles();
 
-  const candleWidth = 6;
+  const elapsedMs = Date.now() - startTime;
+  const candleCount = Math.floor(elapsedMs / INTERVAL_MS);
+
+  const candleWidth = 8;
   const maxVisible = Math.floor(canvas.width / candleWidth);
-  const visible = candles.slice(-maxVisible);
+  const start = Math.max(0, candleCount - maxVisible);
 
-  const maxValue = visible[visible.length - 1] || 1;
+  const maxValue = candleCount || 1;
 
-  visible.forEach((v, i) => {
-    const x = i * candleWidth;
-    const h = (v / maxValue) * canvas.height;
+  for (let i = start; i <= candleCount; i++) {
+    const x = (i - start) * candleWidth;
+    const h = (i / maxValue) * canvas.height;
 
-    ctx.fillStyle = "#00ff88";
+    ctx.fillStyle = "#7a3cff"; // purple
     ctx.fillRect(x, canvas.height - h, candleWidth - 1, h);
-  });
+  }
 
   requestAnimationFrame(draw);
 }
