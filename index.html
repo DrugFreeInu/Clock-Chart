@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ClockChart</title>
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    color: #888;
+    font-family: system-ui, sans-serif;
+  }
+  #controls {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+  }
+  button {
+    margin-right: 6px;
+    background: #111;
+    color: #0f0;
+    border: 1px solid #222;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  canvas {
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <button onclick="setIntervalMs(1000)">1s</button>
+  <button onclick="setIntervalMs(60000)">1m</button>
+  <button onclick="setIntervalMs(3600000)">1h</button>
+  <button onclick="setIntervalMs(86400000)">1d</button>
+</div>
+
+<canvas id="chart"></canvas>
+
+<script>
+const canvas = document.getElementById("chart");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+let intervalMs = 1000;
+let startTime = Date.now();
+let candles = [];
+
+function setIntervalMs(ms) {
+  intervalMs = ms;
+  startTime = Date.now();
+  candles = [];
+}
+
+function updateCandles() {
+  const elapsed = Date.now() - startTime;
+  const count = Math.floor(elapsed / intervalMs);
+
+  while (candles.length <= count) {
+    candles.push(candles.length);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  updateCandles();
+
+  const candleWidth = 6;
+  const maxVisible = Math.floor(canvas.width / candleWidth);
+  const visible = candles.slice(-maxVisible);
+
+  const maxValue = visible[visible.length - 1] || 1;
+
+  visible.forEach((v, i) => {
+    const x = i * candleWidth;
+    const h = (v / maxValue) * canvas.height;
+
+    ctx.fillStyle = "#00ff88";
+    ctx.fillRect(x, canvas.height - h, candleWidth - 1, h);
+  });
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+
+</body>
+</html>
