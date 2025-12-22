@@ -38,7 +38,7 @@ const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 const countEl = document.getElementById("count");
 
-// --- persistent start ---
+// ---- persistent time ----
 const KEY = "clockchart_start";
 let start = localStorage.getItem(KEY);
 if (!start) {
@@ -48,56 +48,51 @@ if (!start) {
   start = Number(start);
 }
 
-// --- config ---
+// ---- config ----
 const INTERVAL_SEC = 1;
 const CANDLE_WIDTH = 6;
 const CANDLE_GAP = 4;
 const STEP = CANDLE_WIDTH + CANDLE_GAP;
 
-// --- swipe ---
+// ---- interaction state ----
 let scrollOffset = 0;
-let isDragging = false;
+let isHolding = false;
 let lastX = 0;
-let trailAlpha = 0;
 
-// --- audio ---
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playChime(pitch = 440) {
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = "sine";
-  o.frequency.value = pitch;
-  g.gain.value = 0.0001;
-  g.gain.exponentialRampToValueAtTime(0.04, audioCtx.currentTime + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.25);
-  o.connect(g).connect(audioCtx.destination);
-  o.start();
-  o.stop(audioCtx.currentTime + 0.26);
-}
+// pointer position (for trails)
+let px = canvas.width / 2;
+let py = canvas.height / 2;
 
-// --- pointer handlers ---
+// ---- pointer events ----
 canvas.addEventListener("pointerdown", e => {
-  isDragging = true;
+  isHolding = true;
   lastX = e.clientX;
-  trailAlpha = 1;
+  updatePointer(e);
 });
 
 canvas.addEventListener("pointermove", e => {
-  if (!isDragging) return;
+  if (!isHolding) return;
   const dx = e.clientX - lastX;
   scrollOffset += dx;
   lastX = e.clientX;
-  playChime(300 + Math.abs(dx) * 4);
-  trailAlpha = 1;
+  updatePointer(e);
 });
 
-canvas.addEventListener("pointerup", () => isDragging = false);
-canvas.addEventListener("pointerleave", () => isDragging = false);
+canvas.addEventListener("pointerup", () => isHolding = false);
+canvas.addEventListener("pointerleave", () => isHolding = false);
 
-// --- draw ---
+function updatePointer(e) {
+  const rect = canvas.getBoundingClientRect();
+  px = e.clientX - rect.left;
+  py = e.clientY - rect.top;
+}
+
+// ---- draw loop ----
 function draw() {
-  // fade background
-  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  // temporal fade (this creates trails)
+  ctx.fillStyle = isHolding
+    ? "rgba(0,0,0,0.06)"   // slow decay while holding
+    : "rgba(0,0,0,0.25)";  // faster decay when released
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const elapsedSec = Math.floor((Date.now() - start) / 1000);
@@ -107,46 +102,26 @@ function draw() {
   const maxVisible = Math.ceil(canvas.width / STEP) + 2;
   const startIndex = Math.max(0, candles - maxVisible);
 
+  // ---- candles ----
   for (let i = startIndex; i < candles; i++) {
     const x = (i - startIndex) * STEP + scrollOffset;
     if (x < -STEP || x > canvas.width + STEP) continue;
 
     const h = ((i + 1) / candles) * canvas.height;
-
-    // candle color (alternating)
     ctx.fillStyle = (i % 2 === 0) ? "#b084ff" : "#5a2bbf";
     ctx.fillRect(x, canvas.height - h, CANDLE_WIDTH, Math.max(h, 6));
-
-    // ---- number inside candle ----
-    const label = String(i + 1);
-
-    // auto font sizing based on digits + candle height
-    const maxFont = Math.min(14, h * 0.6);
-    const minFont = 6;
-    let fontSize = maxFont;
-
-    ctx.save();
-    ctx.translate(x + CANDLE_WIDTH / 2, canvas.height - h + 4);
-    ctx.rotate(-Math.PI / 2);
-
-    while (fontSize > minFont) {
-      ctx.font = `${fontSize}px system-ui`;
-      if (ctx.measureText(label).width <= h - 8) break;
-      fontSize--;
-    }
-
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText(label, 0, 0);
-    ctx.restore();
   }
 
-  // trail glow
-  if (trailAlpha > 0) {
-    ctx.fillStyle = `rgba(176,132,255,${trailAlpha * 0.08})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    trailAlpha *= 0.9;
+  // ---- finger-following glow ----
+  if (isHolding) {
+    const radius = 80;
+    const grad = ctx.createRadialGradient(px, py, 0, px, py, radius);
+    grad.addColorStop(0, "rgba(176,132,255,0.35)");
+    grad.addColorStop(0.4, "rgba(176,132,255,0.18)");
+    grad.addColorStop(1, "rgba(176,132,255,0)");
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(px - radius, py - radius, radius * 2, radius * 2);
   }
 
   requestAnimationFrame(draw);
