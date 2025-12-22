@@ -29,10 +29,7 @@ body {
 
   font-weight: 900;
   letter-spacing: 0.18em;
-
-  /* 🔥 BIG BIG */
   font-size: min(22vw, 260px);
-
   color: #c59bff;
 
   text-shadow:
@@ -44,11 +41,8 @@ body {
   animation: breathe 4.5s ease-in-out infinite;
 }
 
-/* breathing glow */
 @keyframes breathe {
-  0% {
-    opacity: 0.9;
-  }
+  0% { opacity: 0.9; }
   50% {
     opacity: 1;
     text-shadow:
@@ -57,11 +51,42 @@ body {
       0 0 140px rgba(140,60,255,0.95),
       0 0 260px rgba(100,20,200,0.9);
   }
-  100% {
-    opacity: 0.9;
-  }
+  100% { opacity: 0.9; }
 }
 
+/* ---- CONTROLS ---- */
+#controls {
+  position: absolute;
+  top: calc(6% + 22vw);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+button {
+  background: rgba(40,10,80,0.6);
+  color: #caa6ff;
+  border: 1px solid rgba(160,120,255,0.4);
+  padding: 8px 14px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+button.active {
+  background: rgba(160,120,255,0.9);
+  color: black;
+}
+
+button:hover {
+  background: rgba(120,80,200,0.8);
+  color: black;
+}
+
+/* ---- CANVAS ---- */
 canvas {
   display: block;
   touch-action: none;
@@ -72,6 +97,14 @@ canvas {
 <body>
 
 <div id="neon">DFI&nbsp;TIME</div>
+
+<div id="controls">
+  <button class="active" onclick="setIntervalMode(1,this)">1s</button>
+  <button onclick="setIntervalMode(60,this)">1m</button>
+  <button onclick="setIntervalMode(3600,this)">1h</button>
+  <button onclick="setIntervalMode(86400,this)">1d</button>
+</div>
+
 <canvas id="chart"></canvas>
 
 <script>
@@ -79,31 +112,11 @@ canvas {
 const neon = document.getElementById("neon");
 
 function flicker() {
-  const r = Math.random();
-
-  if (r < 0.05) {
+  if (Math.random() < 0.05) {
     neon.style.opacity = "0.25";
     setTimeout(() => neon.style.opacity = "1", 45);
   }
-  else if (r < 0.1) {
-    neon.style.textShadow = `
-      0 0 12px rgba(197,155,255,0.4),
-      0 0 36px rgba(176,132,255,0.45),
-      0 0 80px rgba(140,60,255,0.35)
-    `;
-    setTimeout(resetGlow, 140);
-  }
 }
-
-function resetGlow() {
-  neon.style.textShadow = `
-    0 0 10px rgba(197,155,255,0.75),
-    0 0 32px rgba(176,132,255,0.75),
-    0 0 80px rgba(140,60,255,0.7),
-    0 0 160px rgba(100,20,200,0.6)
-  `;
-}
-
 setInterval(flicker, 220);
 
 /* ================= CLOCKCHART ================= */
@@ -121,7 +134,7 @@ window.addEventListener("resize", resize);
 const CHART_WIDTH = 800;
 const CHART_HEIGHT = 300;
 
-// ---- persistent time ----
+// ---- persistent start ----
 const KEY = "clockchart_start";
 let start = localStorage.getItem(KEY);
 if (!start) {
@@ -131,8 +144,10 @@ if (!start) {
   start = Number(start);
 }
 
+// ---- interval state ----
+let INTERVAL_SEC = 1;
+
 // ---- config ----
-const INTERVAL_SEC = 1;
 const CANDLE_WIDTH = 6;
 const CANDLE_GAP = 4;
 const STEP = CANDLE_WIDTH + CANDLE_GAP;
@@ -172,6 +187,13 @@ canvas.addEventListener("pointerup", e => {
 
 canvas.addEventListener("pointercancel", () => isHolding = false);
 
+// ---- interval switch ----
+function setIntervalMode(sec, btn) {
+  INTERVAL_SEC = sec;
+  document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
 // ---- draw loop ----
 function draw() {
   ctx.fillStyle = isHolding
@@ -180,7 +202,7 @@ function draw() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const ox = (canvas.width - CHART_WIDTH) / 2;
-  const oy = (canvas.height - CHART_HEIGHT) / 2 + 120;
+  const oy = (canvas.height - CHART_HEIGHT) / 2 + 140;
 
   const elapsedSec = Math.floor((Date.now() - start) / 1000);
   const candles = Math.floor(elapsedSec / INTERVAL_SEC) + 1;
