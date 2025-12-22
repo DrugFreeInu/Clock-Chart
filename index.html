@@ -96,7 +96,7 @@ function setMode(name, ms) {
   event.target.classList.add("active");
 }
 
-setMode("1m",60000); // default
+setMode("1m",60000);
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -107,24 +107,31 @@ function draw() {
   const full = Math.floor(elapsed / intervalMs);
   const progress = (elapsed % intervalMs) / intervalMs;
 
-  const candleWidth = 8;
+  const candleWidth = 10;
   const maxVisible = Math.floor(canvas.width / candleWidth);
-  const start = Math.max(0, full - maxVisible + 1);
-  const maxValue = Math.max(1, full + progress);
 
-  // completed candles
+  const totalCandles = full + 1; // always show at least one
+  const start = Math.max(0, totalCandles - maxVisible);
+
+  const maxHeightValue = Math.max(1, totalCandles);
+
+  // draw completed candles
   for (let i = start; i < full; i++) {
     const x = (i - start) * candleWidth;
-    const h = (i / maxValue) * canvas.height;
+    const h = ((i + 1) / maxHeightValue) * canvas.height;
+
     ctx.fillStyle = "#7a3cff";
-    ctx.fillRect(x, canvas.height - h, candleWidth - 1, Math.max(h, 2));
+    ctx.fillRect(x, canvas.height - h, candleWidth - 2, Math.max(h, 4));
   }
 
-  // live candle
-  const x = (full - start) * candleWidth;
-  const h = ((full + progress) / maxValue) * canvas.height;
+  // draw live candle
+  const liveIndex = full;
+  const x = (liveIndex - start) * candleWidth;
+  const liveValue = full + progress;
+  const h = (liveValue / maxHeightValue) * canvas.height;
+
   ctx.fillStyle = "#b084ff";
-  ctx.fillRect(x, canvas.height - h, candleWidth - 1, Math.max(h, 2));
+  ctx.fillRect(x, canvas.height - h, candleWidth - 2, Math.max(h, 6));
 
   requestAnimationFrame(draw);
 }
