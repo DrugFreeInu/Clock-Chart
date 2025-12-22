@@ -7,11 +7,32 @@
   body {
     margin: 0;
     background: #000;
+    color: #aaa;
+    font-family: system-ui, sans-serif;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
-    font-family: system-ui, sans-serif;
+  }
+
+  #controls {
+    margin-bottom: 16px;
+  }
+
+  button {
+    font-size: 16px;
+    padding: 10px 16px;
+    margin: 0 6px;
+    background: #140022;
+    color: #caa6ff;
+    border: 1px solid #2a0044;
+    cursor: pointer;
+  }
+
+  button.active {
+    background: #7a3cff;
+    color: #000;
   }
 
   #wrapper {
@@ -19,8 +40,7 @@
     max-width: 900px;
     height: 40vh;
     max-height: 300px;
-    border: 1px solid #140022;
-    background: #000;
+    border: 1px solid #2a0044;
   }
 
   canvas {
@@ -31,6 +51,13 @@
 </style>
 </head>
 <body>
+
+<div id="controls">
+  <button onclick="setMode('1s',1000)">1 sec</button>
+  <button onclick="setMode('1m',60000)">1 min</button>
+  <button onclick="setMode('1h',3600000)">1 hour</button>
+  <button onclick="setMode('1d',86400000)">1 day</button>
+</div>
 
 <div id="wrapper">
   <canvas id="chart"></canvas>
@@ -47,36 +74,57 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-const KEY = "clockchart_start_time";
-const INTERVAL_MS = 60000; // 1 minute per candle
+let intervalMs = 60000;
+let storageKey = "clockchart_start_1m";
+let startTime = loadStart();
 
-let startTime = localStorage.getItem(KEY);
-if (!startTime) {
-  startTime = Date.now();
-  localStorage.setItem(KEY, startTime);
-} else {
-  startTime = parseInt(startTime, 10);
+function loadStart() {
+  let t = localStorage.getItem(storageKey);
+  if (!t) {
+    t = Date.now();
+    localStorage.setItem(storageKey, t);
+  }
+  return parseInt(t, 10);
 }
+
+function setMode(name, ms) {
+  intervalMs = ms;
+  storageKey = "clockchart_start_" + name;
+  startTime = loadStart();
+
+  document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+}
+
+setMode("1m",60000); // default
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const elapsedMs = Date.now() - startTime;
-  const candleCount = Math.floor(elapsedMs / INTERVAL_MS);
+  const now = Date.now();
+  const elapsed = now - startTime;
+
+  const full = Math.floor(elapsed / intervalMs);
+  const progress = (elapsed % intervalMs) / intervalMs;
 
   const candleWidth = 8;
   const maxVisible = Math.floor(canvas.width / candleWidth);
-  const start = Math.max(0, candleCount - maxVisible);
+  const start = Math.max(0, full - maxVisible + 1);
+  const maxValue = Math.max(1, full + progress);
 
-  const maxValue = candleCount || 1;
-
-  for (let i = start; i <= candleCount; i++) {
+  // completed candles
+  for (let i = start; i < full; i++) {
     const x = (i - start) * candleWidth;
     const h = (i / maxValue) * canvas.height;
-
-    ctx.fillStyle = "#7a3cff"; // purple
-    ctx.fillRect(x, canvas.height - h, candleWidth - 1, h);
+    ctx.fillStyle = "#7a3cff";
+    ctx.fillRect(x, canvas.height - h, candleWidth - 1, Math.max(h, 2));
   }
+
+  // live candle
+  const x = (full - start) * candleWidth;
+  const h = ((full + progress) / maxValue) * canvas.height;
+  ctx.fillStyle = "#b084ff";
+  ctx.fillRect(x, canvas.height - h, candleWidth - 1, Math.max(h, 2));
 
   requestAnimationFrame(draw);
 }
