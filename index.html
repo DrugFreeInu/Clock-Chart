@@ -24,12 +24,28 @@ body {
   position: fixed;
   inset: 0;
   z-index: 0;
+
   background:
-    linear-gradient(90deg, rgba(130,90,200,0.07) 1px, transparent 1px),
-    linear-gradient(rgba(130,90,200,0.07) 1px, transparent 1px),
-    radial-gradient(circle at center, rgba(150,110,220,0.18), rgba(0,0,0,0.92));
+    /* vertical mortar */
+    linear-gradient(
+      90deg,
+      rgba(170,130,240,0.14) 1px,
+      transparent 1px
+    ),
+    /* horizontal mortar */
+    linear-gradient(
+      rgba(170,130,240,0.12) 1px,
+      transparent 1px
+    ),
+    /* ambient glow */
+    radial-gradient(
+      circle at center,
+      rgba(160,120,220,0.22),
+      rgba(0,0,0,0.85)
+    );
+
   background-size: 72px 36px, 72px 36px, 100% 100%;
-  background-color: #07040d;
+  background-color: #090612;
 }
 
 /* ---- NEON STACK ---- */
