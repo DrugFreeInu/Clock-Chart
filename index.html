@@ -19,51 +19,52 @@ body {
   color: #caa6ff;
 }
 
-/* ---- IMPERFECT PURPLE BRICK WALL ---- */
+/* ---- TRUE STAGGERED BRICK WALL ---- */
 #brickWall {
   position: fixed;
   inset: 0;
   z-index: 0;
-
   background-color: #0a0614;
 
+  /* horizontal mortar lines (rows) */
   background-image:
-    /* vertical cracks layer A */
-    repeating-linear-gradient(
-      90deg,
-      rgba(200,150,255,0.28) 0px,
-      rgba(200,150,255,0.28) 2px,
-      transparent 2px,
-      transparent 68px
-    ),
-
-    /* vertical cracks layer B (offset + different width) */
-    repeating-linear-gradient(
-      90deg,
-      rgba(200,150,255,0.22) 0px,
-      rgba(200,150,255,0.22) 1.5px,
-      transparent 1.5px,
-      transparent 74px
-    ),
-
-    /* horizontal mortar */
-    repeating-linear-gradient(
-      0deg,
-      rgba(200,150,255,0.22) 0px,
+    linear-gradient(
+      to bottom,
       rgba(200,150,255,0.22) 2px,
-      transparent 2px,
-      transparent 36px
+      transparent 2px
+    ),
+    linear-gradient(
+      to right,
+      rgba(200,150,255,0.28) 2px,
+      transparent 2px
     );
 
+  /* brick sizing */
   background-size:
-    72px 72px,
-    86px 72px,
-    100% 36px;
+    100% 36px,    /* row height */
+    120px 36px;   /* brick width x row height */
 
   background-position:
     0 0,
-    36px 18px,
     0 0;
+}
+
+/* offset every other row */
+#brickWall::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background-image:
+    linear-gradient(
+      to right,
+      rgba(200,150,255,0.28) 2px,
+      transparent 2px
+    );
+
+  background-size: 120px 36px;
+  background-position: 60px 18px; /* half brick offset */
 }
 
 /* ---- NEON STACK ---- */
@@ -213,8 +214,6 @@ const STEP = CANDLE_WIDTH + CANDLE_GAP;
 let scrollOffset = 0;
 let isHolding = false;
 let lastX = 0;
-let px = canvas.width / 2;
-let py = canvas.height / 2;
 
 canvas.addEventListener("pointerdown", e => {
   canvas.setPointerCapture(e.pointerId);
@@ -226,8 +225,6 @@ canvas.addEventListener("pointermove", e => {
   if (!isHolding) return;
   scrollOffset += e.clientX - lastX;
   lastX = e.clientX;
-  px = e.clientX;
-  py = e.clientY;
 });
 
 canvas.addEventListener("pointerup", e => {
