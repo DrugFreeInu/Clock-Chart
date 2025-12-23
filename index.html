@@ -19,6 +19,19 @@ body {
   color: #caa6ff;
 }
 
+/* ---- PURPLE BRICK WALL ---- */
+#brickWall {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(90deg, rgba(130,90,200,0.07) 1px, transparent 1px),
+    linear-gradient(rgba(130,90,200,0.07) 1px, transparent 1px),
+    radial-gradient(circle at center, rgba(150,110,220,0.18), rgba(0,0,0,0.92));
+  background-size: 72px 36px, 72px 36px, 100% 100%;
+  background-color: #07040d;
+}
+
 /* ---- NEON STACK ---- */
 #neonWrap {
   position: absolute;
@@ -26,6 +39,7 @@ body {
   width: 100%;
   text-align: center;
   pointer-events: none;
+  z-index: 2;
 }
 
 .neonLine {
@@ -45,13 +59,14 @@ body {
 
 .neonLine span {
   display: inline-block;
-  color: #9f7ae6;
+  color: #d8c6ff;
   text-shadow:
-    0 0 6px rgba(160,120,220,0.35),
-    0 0 18px rgba(130,90,200,0.35),
-    0 0 42px rgba(90,50,160,0.3),
-    0 0 80px rgba(60,30,120,0.25);
+    0 0 4px rgba(210,190,255,0.9),
+    0 0 12px rgba(160,120,220,0.6),
+    0 0 28px rgba(130,90,200,0.45),
+    0 0 70px rgba(90,50,160,0.35);
   animation: breathe 4.5s ease-in-out infinite;
+  filter: drop-shadow(0 6px 14px rgba(120,80,200,0.35));
 }
 
 .space { width: 0.6em; }
@@ -64,7 +79,7 @@ body {
   transform: translateX(-50%);
   display: flex;
   gap: 18px;
-  z-index: 10;
+  z-index: 3;
 }
 
 button {
@@ -91,7 +106,7 @@ button:hover {
 /* ---- ANIM ---- */
 @keyframes breathe {
   0% { opacity: 0.85; }
-  50% { opacity: 0.95; }
+  50% { opacity: 0.98; }
   100% { opacity: 0.85; }
 }
 
@@ -99,11 +114,15 @@ button:hover {
 canvas {
   display: block;
   touch-action: none;
+  position: relative;
+  z-index: 1;
 }
 </style>
 </head>
 
 <body>
+
+<div id="brickWall"></div>
 
 <div id="neonWrap">
   <div id="neonDFI" class="neonLine">
@@ -129,7 +148,7 @@ document.querySelectorAll(".neonLine span").forEach(letter => {
   setInterval(() => {
     if (Math.random() < 0.08) {
       letter.style.opacity = "0.35";
-      setTimeout(() => letter.style.opacity = "0.9", 40);
+      setTimeout(() => letter.style.opacity = "0.95", 40);
     }
   }, 180 + Math.random() * 400);
 });
@@ -231,8 +250,8 @@ function draw() {
     ctx.globalCompositeOperation = "lighter";
     const r = 90;
     const g = ctx.createRadialGradient(px, py, 0, px, py, r);
-    g.addColorStop(0, "rgba(110,70,170,0.22)");
-    g.addColorStop(0.4, "rgba(90,55,140,0.12)");
+    g.addColorStop(0, "rgba(130,90,200,0.22)");
+    g.addColorStop(0.4, "rgba(100,65,160,0.12)");
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
     ctx.fillRect(px - r, py - r, r * 2, r * 2);
