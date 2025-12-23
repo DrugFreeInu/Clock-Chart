@@ -60,7 +60,7 @@ body {
 }
 
 #neonDFI {
-  font-size: min(18vw, 220px);
+  font-size: min(1818vw, 220px);
 }
 
 #neonTIME {
@@ -79,8 +79,6 @@ body {
   animation: breathe 4.5s ease-in-out infinite;
   filter: drop-shadow(0 6px 14px rgba(120,80,200,0.35));
 }
-
-.space { width: 0.6em; }
 
 /* ---- CONTROLS ---- */
 #controls {
@@ -234,13 +232,18 @@ function setIntervalMode(sec, btn) {
 
 /* ---- draw ---- */
 function draw() {
-  ctx.fillStyle = isHolding
-    ? "rgba(0,0,0,0.04)"
-    : "rgba(0,0,0,0.06)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const ox = (canvas.width - CHART_WIDTH) / 2;
   const oy = (canvas.height - CHART_HEIGHT) / 2 + 260;
+
+  /* fade ONLY the chart zone */
+  ctx.fillStyle = "rgba(0,0,0,0.08)";
+  ctx.fillRect(
+    ox - 40,
+    oy - 40,
+    CHART_WIDTH + 80,
+    CHART_HEIGHT + 80
+  );
 
   const elapsedSec = Math.floor((Date.now() - start) / 1000);
   const candles = Math.floor(elapsedSec / INTERVAL_SEC) + 1;
