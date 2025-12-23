@@ -19,10 +19,47 @@ body {
   color: #caa6ff;
 }
 
+/* ---- NEON STACK ---- */
+#neonWrap {
+  position: absolute;
+  top: 10%;
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.neonLine {
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  line-height: 1.05;
+}
+
+#neonDFI {
+  font-size: min(18vw, 220px);
+}
+
+#neonTIME {
+  font-size: min(14vw, 160px);
+  margin-top: 8px;
+}
+
+.neonLine span {
+  display: inline-block;
+  color: #9f7ae6;
+  text-shadow:
+    0 0 6px rgba(160,120,220,0.35),
+    0 0 18px rgba(130,90,200,0.35),
+    0 0 42px rgba(90,50,160,0.3),
+    0 0 80px rgba(60,30,120,0.25);
+  animation: breathe 4.5s ease-in-out infinite;
+}
+
+.space { width: 0.6em; }
+
 /* ---- CONTROLS ---- */
 #controls {
   position: absolute;
-  top: 6%;
+  top: 38%;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -51,37 +88,7 @@ button:hover {
   color: black;
 }
 
-/* ---- NEON SIGN (SEGMENTED) ---- */
-#neon {
-  position: absolute;
-  top: 18%;
-  width: 100%;
-  text-align: center;
-  pointer-events: none;
-
-  font-weight: 900;
-  letter-spacing: 0.22em;
-  font-size: min(18vw, 220px);
-}
-
-#neon span {
-  display: inline-block;
-  color: #9f7ae6;
-
-  text-shadow:
-    0 0 6px rgba(160,120,220,0.35),
-    0 0 18px rgba(130,90,200,0.35),
-    0 0 42px rgba(90,50,160,0.3),
-    0 0 80px rgba(60,30,120,0.25);
-
-  animation: breathe 4.5s ease-in-out infinite;
-}
-
-#neon .space {
-  width: 0.6em;
-}
-
-/* breathing, subtle */
+/* ---- ANIM ---- */
 @keyframes breathe {
   0% { opacity: 0.85; }
   50% { opacity: 0.95; }
@@ -98,6 +105,15 @@ canvas {
 
 <body>
 
+<div id="neonWrap">
+  <div id="neonDFI" class="neonLine">
+    <span>D</span><span>F</span><span>I</span>
+  </div>
+  <div id="neonTIME" class="neonLine">
+    <span>T</span><span>I</span><span>M</span><span>E</span>
+  </div>
+</div>
+
 <div id="controls">
   <button class="active" onclick="setIntervalMode(1,this)">1&nbsp;SEC</button>
   <button onclick="setIntervalMode(60,this)">1&nbsp;MIN</button>
@@ -105,17 +121,11 @@ canvas {
   <button onclick="setIntervalMode(86400,this)">1&nbsp;DAY</button>
 </div>
 
-<div id="neon">
-  <span>D</span><span>F</span><span>I</span>
-  <span class="space"></span>
-  <span>T</span><span>I</span><span>M</span><span>E</span>
-</div>
-
 <canvas id="chart"></canvas>
 
 <script>
-/* ================= PER-LETTER NEON FLICKER ================= */
-document.querySelectorAll("#neon span:not(.space)").forEach(letter => {
+/* ================= PER-LETTER FLICKER ================= */
+document.querySelectorAll(".neonLine span").forEach(letter => {
   setInterval(() => {
     if (Math.random() < 0.08) {
       letter.style.opacity = "0.35";
@@ -135,11 +145,7 @@ function resize() {
 resize();
 window.addEventListener("resize", resize);
 
-// ---- layout ----
-const CHART_WIDTH = 800;
-const CHART_HEIGHT = 300;
-
-// ---- persistent start ----
+/* ---- persistent start ---- */
 const KEY = "clockchart_start";
 let start = localStorage.getItem(KEY);
 if (!start) {
@@ -149,32 +155,28 @@ if (!start) {
   start = Number(start);
 }
 
-// ---- interval state ----
+/* ---- interval ---- */
 let INTERVAL_SEC = 1;
 
-// ---- config ----
+/* ---- config ---- */
+const CHART_WIDTH = 800;
+const CHART_HEIGHT = 300;
 const CANDLE_WIDTH = 6;
 const CANDLE_GAP = 4;
 const STEP = CANDLE_WIDTH + CANDLE_GAP;
 
-// ---- interaction ----
+/* ---- interaction ---- */
 let scrollOffset = 0;
 let isHolding = false;
 let lastX = 0;
 let px = canvas.width / 2;
 let py = canvas.height / 2;
 
-function updatePointer(e) {
-  px = e.clientX;
-  py = e.clientY;
-}
-
 canvas.addEventListener("pointerdown", e => {
   e.preventDefault();
   canvas.setPointerCapture(e.pointerId);
   isHolding = true;
   lastX = e.clientX;
-  updatePointer(e);
 });
 
 canvas.addEventListener("pointermove", e => {
@@ -182,7 +184,8 @@ canvas.addEventListener("pointermove", e => {
   e.preventDefault();
   scrollOffset += e.clientX - lastX;
   lastX = e.clientX;
-  updatePointer(e);
+  px = e.clientX;
+  py = e.clientY;
 });
 
 canvas.addEventListener("pointerup", e => {
@@ -192,14 +195,14 @@ canvas.addEventListener("pointerup", e => {
 
 canvas.addEventListener("pointercancel", () => isHolding = false);
 
-// ---- interval switch ----
+/* ---- interval switch ---- */
 function setIntervalMode(sec, btn) {
   INTERVAL_SEC = sec;
   document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
 }
 
-// ---- draw loop ----
+/* ---- draw ---- */
 function draw() {
   ctx.fillStyle = isHolding
     ? "rgba(0,0,0,0.06)"
@@ -207,7 +210,7 @@ function draw() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const ox = (canvas.width - CHART_WIDTH) / 2;
-  const oy = (canvas.height - CHART_HEIGHT) / 2 + 220;
+  const oy = (canvas.height - CHART_HEIGHT) / 2 + 260;
 
   const elapsedSec = Math.floor((Date.now() - start) / 1000);
   const candles = Math.floor(elapsedSec / INTERVAL_SEC) + 1;
